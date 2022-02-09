@@ -1,7 +1,13 @@
 module.exports = {
-  content: [],
+  content: [
+    "./src/**/*.{js,jsx}",
+  ],
   theme: {
-    extend: {},
+    extend: {
+      transitionProperty: {
+        'width': 'width',
+      }
+    },
   },
   plugins: [],
 }
