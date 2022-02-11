@@ -1,6 +1,6 @@
 
 const router = require('express').Router();
-const { createPost, deletePost } = require('../controllers/post');
+const { createPost, deletePost, updatePost } = require('../controllers/post');
 
 const multer = require('../middlewares/multer');
 const { validate, postValidator } = require('../middlewares/postValidator');
@@ -13,6 +13,15 @@ router.post(
     postValidator,
     validate,
     createPost
+);
+
+router.put(
+    '/:postId',
+    multer.single("thumbnail"),
+    parseData,
+    postValidator,
+    validate,
+    updatePost
 );
 
 router.delete('/:postId', deletePost)

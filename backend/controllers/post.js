@@ -20,6 +20,10 @@ const addToFeaturedPost = async (postId) => {
     })
 }
 
+const removeFromFeaturedPost = async (postId) => {
+    await FeaturedPost.findOneAndDelete({post: postId})
+}
+
 exports.createPost = async (req, res) => {
     const {title, meta, content, slug, author, tags, featured} = req.body;
     const { file } = req;
@@ -61,7 +65,7 @@ exports.deletePost = async (req, res) => {
         if (!post)
         return res.status(404).json({ error: 'Post not found'})
 
-        const { public_id } = post.thumbnail
+        const  public_id  = post.thumbnail?.public_id;
 
         if (public_id) {
             const { result } = await cloudinary.uploader.destroy(public_id)
@@ -71,5 +75,55 @@ exports.deletePost = async (req, res) => {
 
     await Post.findByIdAndDelete(postId)
     res.json({message: 'This Post has been removed '})
+
+}
+
+exports.updatePost = async (req, res) => {
+
+    const { title, meta, content, slug, author, tags, featured } = req.body
+    const { file } = req
+    const { postId } = req.params;
+
+    if (!isValidObjectId(postId)) 
+    return res.status(401).json({ error: 'Invalid params'} )
+
+    const post = await Post.findById(postId)
+    if (!post) return res.status(404).json({error: 'Post not found'})
+
+    const public_id = post.thumbnail?.public_id
+    if (public_id && file) {
+        const { result } = await cloudinary.uploader.destroy(public_id)
+        if ( result = 'ok' ) 
+        return res.status(404).json({error: 'Could not remove thumbnail'})
+    }
+
+    if (file) {
+        const { secure_url: url, public_id } = await cloudinary.uploader.upload(file.path)
+        post.thumbnail == { url, public_id }
+    }
+
+    post.title = title;
+    post.meta = meta;
+    post.content = content;
+    post.slug = slug;
+    post.author = author;
+    post.tags = tags;
+
+
+    if (featured) await addToFeaturedPost(post._id)
+    else await removeFromFeaturedPost(post._id)
+
+    await post.save()
+
+    res.json({
+        post: {
+            id: post._id, 
+            title, 
+            meta,
+            slug, 
+            thumbnail: post.thumbnail?.url,
+            author: post.author, 
+        }
+    });
 
 }
